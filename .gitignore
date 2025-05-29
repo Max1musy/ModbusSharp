@@ -1,0 +1,13 @@
+.vs
+obj
+bin
+ModbusSharp/obj
+ModbusSharp/bin
+ModbusTest/obj
+ModbusTest/bin
+.git
+.idea
+ModbusSharp/.git
+ModbusSharp/.idea
+ModbusTest/.git
+ModbusTest/.idea

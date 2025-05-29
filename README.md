@@ -1,5 +1,9 @@
 # ModbusSharp
 Modbus TCP, Modbus UDP, Modbus Ascii and Modbus RTU client/server library for .NET implementations
+## 安装
+```
+dotnet add package ModbusSharp
+```
 ## 用法1 直接新建客户端调用读写
 ```
 var client = new ModbusTcp();//ModbusUdp ModbusRtu ModbusAscii

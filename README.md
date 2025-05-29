@@ -25,7 +25,7 @@ var res = client.WriteString(2, 2);
 var res = client.ReadBit(2, 2);
 var res = client.WriteBit(2, 2);
 ```
-## usage2 plc绑定对象，自动读取，实现io的对象操作
+## 用法2 plc绑定对象，自动读取，实现io的对象操作
 ```
 public class MyPlc : ModbusTcp
 {

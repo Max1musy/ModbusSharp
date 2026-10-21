@@ -35,11 +35,11 @@ public record HoldingRegister<T> : IOWriteBase<T> where T : struct, IConvertible
                 res.ThrowExceptionIfError();
                 InvokeChange(res.Content[0]);
             }
-            return Result<T>.CreateSuccessResult(LastData);
+            return Result.Ok(LastData);
         }
         catch (Exception ex)
         {
-            return Result<T>.CreateFailedResult(ex.Message);
+            return Result.Failed<T>(ex.Message);
         }
     }
 
@@ -63,11 +63,11 @@ public record HoldingRegister<T> : IOWriteBase<T> where T : struct, IConvertible
                 res.ThrowExceptionIfError();
             }
             LastData = value;
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.CreateFailedResult(ex.Message);
+            return Result.Failed(ex.Message);
         }
     }
 

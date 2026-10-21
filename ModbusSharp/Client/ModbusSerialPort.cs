@@ -59,7 +59,7 @@ public abstract class ModbusSerialPort : ModbusLongConnection<SerialPortConfig>
                 {
                     throw new TimeoutException("读取超时");
                 }
-                return ModbusResponse.CreateSuccessResult(buffer);
+                return ModbusResponse.Ok(buffer);
             }
             catch (Exception e)
             {
@@ -67,7 +67,7 @@ public abstract class ModbusSerialPort : ModbusLongConnection<SerialPortConfig>
                 {
                     Task.Run(() => ReConnect());
                 }
-                return ModbusResponse.CreateFailedResult(e.Message);
+                return ModbusResponse.Failed(e.Message);
             }
         }
     }

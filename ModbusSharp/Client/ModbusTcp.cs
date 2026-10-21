@@ -57,6 +57,7 @@ public class ModbusTcp : ModbusLongConnection<SocketConfig>
                 return;
             }
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.ReceiveTimeout = Config.ReceiveTimeout;
             socket.SendTimeout = Config.SendTimeout;
             if (Config.LocalPort != 0)
@@ -99,7 +100,7 @@ public class ModbusTcp : ModbusLongConnection<SocketConfig>
                 }
                 var receiveData = new byte[NumberOfBytes];
                 Array.Copy(data, 0, receiveData, 0, NumberOfBytes);
-                return ModbusResponse.CreateSuccessResult(receiveData);
+                return ModbusResponse.Ok(receiveData);
             }
             catch (Exception e)
             {
@@ -107,7 +108,7 @@ public class ModbusTcp : ModbusLongConnection<SocketConfig>
                 {
                     ReConnect();
                 }
-                return ModbusResponse.CreateFailedResult(e.Message);
+                return ModbusResponse.Failed(e.Message);
             }
         }
     }

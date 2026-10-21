@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -13,25 +12,21 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// <summary>
     /// 配置
     /// </summary>
-    [JsonIgnore]
     public TConfig Config { get; init; }
 
     /// <summary>
     /// 存放每一种io的地址的最大值和最小值
     /// </summary>
-    [JsonIgnore]
     readonly Dictionary<IOType, (int, int)> _Dict = new ();
 
     /// <summary>
     /// 所有绑定在此连接上的io
     /// </summary>
-    [JsonIgnore]
     public readonly HashSet<IOBase> IOBases = new ();
 
     /// <summary>
     /// 退出线程
     /// </summary>
-    [JsonIgnore]
     protected bool IsExit = false;
 
     /// <summary>
@@ -229,8 +224,9 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// 协议类型
     /// </summary>
     /// <returns></returns>
-    [JsonIgnore]
     public abstract ModbusType Type { get; }
+
+    ushort TransactionIdentifier { get; set; } = 0;
 
     /// <summary>
     /// 建立基础请求
@@ -241,16 +237,15 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// <returns></returns>
     ModbusRequest CreateBaseRequest(FunctionCode FunctionCode, ushort address, ushort quantity)
     {
-        Extention.TransactionIdentifier++;
-        if (Extention.TransactionIdentifier >= ushort.MaxValue)
+        if (TransactionIdentifier >= ushort.MaxValue)
         {
-            Extention.TransactionIdentifier = 0;
+            TransactionIdentifier = 0;
         }
         return new()
         {
             ModbusType = Type,
             FunctionCode = FunctionCode,
-            TransactionIdentifier = Extention.TransactionIdentifier,
+            TransactionIdentifier = TransactionIdentifier,
             Address = address,
             Quantity = quantity,
             UnitIdentifier = Config.UnitIdentifier,
@@ -263,30 +258,22 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="list">存放数据的array</param>
-    /// <param name="curr">当前位置</param>
+    /// <param name="cur">当前位置</param>
     /// <param name="address">地址</param>
     /// <param name="quantity">长度</param>
-    /// <param name="Input">是否是输入</param>
-    void read<T>(T[] list, int curr, int address, int quantity, bool Input = false) where T : struct
+    /// <param name="input">是否是输入</param>
+    void read<T>(T[] list, int cur, int address, int quantity, bool input = false) where T : struct
     {
         if (typeof(bool).IsAssignableFrom(typeof(T)))
         {
-            Result<bool[]> res;
-            if (Input)
-                res = ReadDiscreteInputs(address + curr, quantity);
-            else
-                res = ReadCoils(address + curr, quantity);
+            var res = input ? ReadDiscreteInputs(address + cur, quantity) : ReadCoils(address + cur, quantity);
             res.ThrowExceptionIfError();
             for (int j = 0; j < res.Content.Length; j++)
-                list[curr + j] = (T)Convert.ChangeType(res.Content[j], typeof(T));
+                list[cur + j] = (T)Convert.ChangeType(res.Content[j], typeof(T));
         }
         else
         {
-            Result<ushort[]> res;
-            if (Input)
-                res = ReadInputRegisters(address + curr, quantity);
-            else
-                res = ReadHoldingRegisters(address + curr, quantity);
+            var res = input ? ReadInputRegisters(address + cur, quantity) : ReadHoldingRegisters(address + cur, quantity);
             res.ThrowExceptionIfError();
             int size = Marshal.SizeOf<T>() / 2;
             for (int i = 0; i < res.Content.Length; i += size)
@@ -295,7 +282,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
                 Array.Copy(res.Content, i, tmp, 0, size);
                 var res1 = tmp.To<T>();
                 res1.ThrowExceptionIfError();
-                list[(curr + i) / size] = (T)Convert.ChangeType(res1.Content, typeof(T));
+                list[(cur + i) / size] = (T)Convert.ChangeType(res1.Content, typeof(T));
             }
         }
     }
@@ -347,7 +334,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         }
         catch (Exception e)
         {
-            return Result<bool[]>.CreateFailedResult(e.Message);
+            return Result.Failed<bool[]>(e.Message);
         }
     }
 
@@ -369,7 +356,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         }
         catch (Exception e)
         {
-            return Result<bool[]>.CreateFailedResult(e.Message);
+            return Result.Failed<bool[]>(e.Message);
         }
     }
 
@@ -391,7 +378,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         }
         catch (Exception e)
         {
-            return Result<ushort[]>.CreateFailedResult(e.Message);
+            return Result.Failed<ushort[]>(e.Message);
         }
     }
 
@@ -413,7 +400,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         }
         catch (Exception e)
         {
-            return Result<ushort[]>.CreateFailedResult(e.Message);
+            return Result.Failed<ushort[]>(e.Message);
         }
     }
 
@@ -430,11 +417,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             var request = CreateBaseRequest(FunctionCode.WriteSingleCoil, (ushort)address, (ushort)(value ? 0xFF00 : 0x0000));
             var reponse = Fetch(request);
             reponse.AnalyseResponse(request);
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -451,11 +438,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             var request = CreateBaseRequest(FunctionCode.WriteSingleRegister, (ushort)address, value);
             var reponse = Fetch(request);
             reponse.AnalyseResponse(request);
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -475,11 +462,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             request.Values = values;
             var reponse = Fetch(request);
             reponse.AnalyseResponse(request);
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -499,11 +486,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             request.Values = values;
             var reponse = Fetch(request);
             reponse.AnalyseResponse(request);
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -524,11 +511,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             request.Values = value;
             var reponse = Fetch(request);
             reponse.AnalyseResponse(request);
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -545,8 +532,8 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         {
             if (Config.EnableMask)
             {
-                var maskBytes = new byte[2] { 0x00, 0x00 };
-                var valueBytes = new byte[2] { 0x00, 0x00 };
+                var maskBytes = new byte[] { 0x00, 0x00 };
+                var valueBytes = new byte[] { 0x00, 0x00 };
                 mask.CopyTo(maskBytes, 0);
                 value.CopyTo(valueBytes, 0);
                 return MaskWriteRegister(address, BitConverter.ToUInt16(maskBytes), BitConverter.ToUInt16(valueBytes));
@@ -571,7 +558,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -601,7 +588,7 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         }
         catch (Exception e)
         {
-            return Result<ushort[]>.CreateFailedResult(e.Message);
+            return Result.Failed<ushort[]>(e.Message);
         }
     }
 
@@ -611,15 +598,15 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// <typeparam name="T">数据类型</typeparam>
     /// <param name="address">起始地址</param>
     /// <param name="quantity">数量</param>
-    /// <param name="Input">是否为输入寄存器或离散输入</param>
+    /// <param name="input">是否为输入寄存器或离散输入</param>
     /// <returns></returns>
-    public Result<T[]> Read<T>(int address, int quantity, bool Input = false) where T : struct
+    public Result<T[]> Read<T>(int address, int quantity, bool input = false) where T : struct
     {
         try
         {
             if (typeof(char).IsAssignableFrom(typeof(T)))
             {
-                var res = Read<ushort>(address, quantity / 2, Input);
+                var res = Read<ushort>(address, quantity / 2, input);
                 res.ThrowExceptionIfError();
                 return (res.Content.ConvertChar() as Result<T[]>)!;
             }
@@ -636,17 +623,17 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             int left = quantity % limit;
             for (int i = 0; i < times; i++)
             {
-                read(list, limit * i, address, limit, Input);
+                read(list, limit * i, address, limit, input);
             }
             if (left > 0)//处理余数
             {
-                read(list, limit * times, address, left, Input);
+                read(list, limit * times, address, left, input);
             }
-            return Result<T[]>.CreateSuccessResult(list);
+            return Result.Ok(list);
         }
         catch (Exception e)
         {
-            return Result<T[]>.CreateFailedResult(e.Message);
+            return Result.Failed<T[]>(e.Message);
         }
     }
 
@@ -655,19 +642,19 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// </summary>
     /// <typeparam name="T">数据类型</typeparam>
     /// <param name="address">起始地址</param>
-    /// <param name="Input">是否为输入寄存器或离散输入</param>
+    /// <param name="input">是否为输入寄存器或离散输入</param>
     /// <returns></returns>
-    public Result<T> Read<T>(int address, bool Input = false) where T : struct
+    public Result<T> Read<T>(int address, bool input = false) where T : struct
     {
         try
         {
-            var res = Read<T>(address, 1, Input);
+            var res = Read<T>(address, 1, input);
             res.ThrowExceptionIfError();
-            return Result<T>.CreateSuccessResult(res.Content[0]);
+            return Result.Ok(res.Content[0]);
         }
         catch (Exception e)
         {
-            return Result<T>.CreateFailedResult(e.Message);
+            return Result.Failed<T>(e.Message);
         }
     }
 
@@ -708,11 +695,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
                 Array.Copy(values, step * times, tmp, 0, left);
                 write(address + limit * times, tmp);
             }
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception e)
         {
-            return Result.CreateFailedResult(e.Message);
+            return Result.Failed(e.Message);
         }
     }
 
@@ -857,11 +844,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
         {
             var res = Read<char>(address, quantity);
             res.ThrowExceptionIfError();
-            return Result<string>.CreateSuccessResult(new string(res.Content));
+            return Result.Ok(new string(res.Content));
         }
         catch (Exception e)
         {
-            return Result<string>.CreateFailedResult(e.Message);
+            return Result.Failed<string>(e.Message);
         }
     }
 
@@ -1007,10 +994,10 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// <param name="address">起始地址</param>
     /// <param name="bitIndex">起始位地址</param>
     /// <param name="quantity">数量</param>
-    /// <param name="Input">是否为输入寄存器</param>
+    /// <param name="input">是否为输入寄存器</param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public Result<bool[]> ReadBit(int address, int bitIndex, int quantity, bool Input = false)
+    public Result<bool[]> ReadBit(int address, int bitIndex, int quantity, bool input = false)
     {
         try
         {
@@ -1023,17 +1010,17 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
             var count = sum / 16;
             if (sum % 16 > 0)
                 count++;
-            var res = Read<ushort>(address, count, Input);
+            var res = Read<ushort>(address, count, input);
             res.ThrowExceptionIfError();
             var ba = new BitArray(res.Content.Packup());
             var tmp = new bool[ba.Length];
             ba.CopyTo(tmp, 0);
             Array.Copy(tmp, bitIndex, ret, 0, quantity);
-            return Result<bool[]>.CreateSuccessResult(ret);
+            return Result.Ok(ret);
         }
         catch (Exception ex)
         {
-            return Result<bool[]>.CreateFailedResult(ex.Message);
+            return Result.Failed<bool[]>(ex.Message);
         }
     }
 
@@ -1042,19 +1029,19 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
     /// </summary>
     /// <param name="address">起始地址</param>
     /// <param name="bitIndex">起始位地址</param>
-    /// <param name="Input">是否为输入寄存器</param>
+    /// <param name="input">是否为输入寄存器</param>
     /// <returns></returns>
-    public Result<bool> ReadBit(int address, int bitIndex, bool Input = false)
+    public Result<bool> ReadBit(int address, int bitIndex, bool input = false)
     {
         try
         {
-            var res = ReadBit(address, bitIndex, 1, Input);
+            var res = ReadBit(address, bitIndex, 1, input);
             res.ThrowExceptionIfError();
-            return Result<bool>.CreateSuccessResult(res.Content[0]);
+            return Result.Ok(res.Content[0]);
         }
         catch (Exception ex)
         {
-            return Result<bool>.CreateFailedResult(ex.Message);
+            return Result.Failed<bool>(ex.Message);
         }
     }
 
@@ -1111,11 +1098,11 @@ public abstract class ModbusClient<TConfig> : IModbusClient, IDisposable where T
                 var res1 = MaskWriteRegister(address + 1 + times, maskBit, metaBit);
                 res1.ThrowExceptionIfError();
             }
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.CreateFailedResult(ex.Message);
+            return Result.Failed(ex.Message);
         }
     }
 

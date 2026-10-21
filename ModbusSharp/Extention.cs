@@ -105,10 +105,6 @@ public enum RegisterOrder
 public static class Extention
 {
     /// <summary>
-    /// 事务ID号
-    /// </summary>
-    public static ushort TransactionIdentifier { get; set; } = 0;
-    /// <summary>
     /// 寄存器一次读写限制
     /// </summary>
     public static readonly int RegisterLimit = 124;
@@ -244,11 +240,11 @@ public static class Extention
             {
                 throw new Exception($"{typeof(T).Name}类型错误");
             }
-            return Result<T>.CreateSuccessResult(value);
+            return Result.Ok(value);
         }
         catch (Exception e)
         {
-            return Result<T>.CreateFailedResult(e.Message);
+            return Result.Failed<T>(e.Message);
         }
     }
 
@@ -267,11 +263,11 @@ public static class Extention
             var tmp = new ushort[registers.Length - offset];
             Array.Copy(registers, offset, tmp, 0, tmp.Length);
             var bytes = tmp.Packup(true);
-            return Result<string>.CreateSuccessResult(System.Text.Encoding.Default.GetString(bytes));
+            return Result.Ok(System.Text.Encoding.Default.GetString(bytes));
         }
         catch (Exception e)
         {
-            return Result<string>.CreateFailedResult(e.Message);
+            return Result.Failed<string>(e.Message);
         }
     }
 
@@ -287,11 +283,11 @@ public static class Extention
         {
             var res = ConvertString(registers, offset);
             res.ThrowExceptionIfError();
-            return Result<char[]>.CreateSuccessResult(res.Content.ToCharArray());
+            return Result.Ok(res.Content.ToCharArray());
         }
         catch (Exception e)
         {
-            return Result<char[]>.CreateFailedResult(e.Message);
+            return Result.Failed<char[]>(e.Message);
         }
     }
 
@@ -331,11 +327,11 @@ public static class Extention
             {
                 Array.Reverse(tmp);
             }
-            return Result<ushort[]>.CreateSuccessResult(tmp);
+            return Result.Ok(tmp);
         }
         catch (Exception e)
         {
-            return Result<ushort[]>.CreateFailedResult(e.Message);
+            return Result.Failed<ushort[]>(e.Message);
         }
     }
 
@@ -350,11 +346,11 @@ public static class Extention
         {
             var array = System.Text.Encoding.Default.GetBytes(stringToConvert);
             var tmp = array.UnPackup(true);
-            return Result<ushort[]>.CreateSuccessResult(tmp);
+            return Result.Ok(tmp);
         }
         catch (Exception e)
         {
-            return Result<ushort[]>.CreateFailedResult(e.Message);
+            return Result.Failed<ushort[]>(e.Message);
         }
     }
 
@@ -369,11 +365,11 @@ public static class Extention
         {
             var array = System.Text.Encoding.Default.GetBytes(stringToConvert);
             var tmp = array.UnPackup(true);
-            return Result<ushort[]>.CreateSuccessResult(tmp);
+            return Result.Ok(tmp);
         }
         catch (Exception e)
         {
-            return Result<ushort[]>.CreateFailedResult(e.Message);
+            return Result.Failed<ushort[]>(e.Message);
         }
     }
 

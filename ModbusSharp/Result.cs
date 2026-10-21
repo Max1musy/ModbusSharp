@@ -3,7 +3,7 @@
 /// <summary>
 /// 操作通用返回结果
 /// </summary>
-public class Result
+public record Result
 {
     /// <summary>
     /// 是否成功
@@ -18,12 +18,22 @@ public class Result
     /// <summary>
     /// 创建成功结果
     /// </summary>
-    public static Result CreateSuccessResult() => new() { Success = true };
+    public static Result Ok() => new() { Success = true };
 
     /// <summary>
     /// 创建失败结果
     /// </summary>
-    public static Result CreateFailedResult(string msg) => new() { Success = false, ErrorMsg = msg };
+    public static Result Failed(string msg) => new() { Success = false, ErrorMsg = msg };
+
+    /// <summary>
+    /// 创建成功结果
+    /// </summary>
+    public static Result<T> Ok<T>(T value) => new() { Success = true, Content = value };
+
+    /// <summary>
+    /// 创建失败结果
+    /// </summary>
+    public static Result<T> Failed<T>(string msg) => new() { Success = false, ErrorMsg = msg };
 
     /// <summary>
     /// 抛异常
@@ -39,22 +49,12 @@ public class Result
 /// 操作返回结果
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class Result<T> : Result
+public record Result<T> : Result
 {
     /// <summary>
     /// 具体值
     /// </summary>
 #pragma warning disable CS8601 // 引用类型赋值可能为 null。
-    public T Content { get; protected set; } = default;
+    public T Content { get; internal set; } = default;
 #pragma warning restore CS8601 // 引用类型赋值可能为 null。
-
-    /// <summary>
-    /// 创建成功结果
-    /// </summary>
-    public static Result<T> CreateSuccessResult(T value) => new() { Success = true, Content = value };
-
-    /// <summary>
-    /// 创建失败结果
-    /// </summary>
-    public static new Result<T> CreateFailedResult(string msg) => new() { Success = false, ErrorMsg = msg };
 }

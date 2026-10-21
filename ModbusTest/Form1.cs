@@ -75,7 +75,6 @@ public partial class Form1 : Form
         bool a = master.ÏßÈ¦²âÊÔ;
         bool b = master.±£³Ö¼Ä´æÆ÷²âÊÔ > 5;
         master.±£³Ö¼Ä´æÆ÷²âÊÔ.InvokeChange(7);
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(master);
     }
 
     private async void button2_Click(object sender, EventArgs e)
@@ -207,16 +206,16 @@ public partial class Form1 : Form
 
 public class M : ModbusTcp
 {
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public Coil ÏßÈ¦²âÊÔ { get; set; } = new();
 
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public DiscreteInput ÀëÉ¢ÊäÈë²âÊÔ;
 
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public HoldingRegister<float> ±£³Ö¼Ä´æÆ÷²âÊÔ;
 
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public InputRegister<double> ÊäÈë¼Ä´æÆ÷²âÊÔ;
 
     public M(SocketConfig config) : base(config)
@@ -226,16 +225,16 @@ public class M : ModbusTcp
 
 public static class F
 {
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public static Coil ÏßÈ¦²âÊÔ = new();
 
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public static DiscreteInput ÀëÉ¢ÊäÈë²âÊÔ;
 
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public static HoldingRegister<float> ±£³Ö¼Ä´æÆ÷²âÊÔ;
 
-    [ModbusProperty(Address = 1)]
+    [ModbusProperty(1)]
     public static InputRegister<double> ÊäÈë¼Ä´æÆ÷²âÊÔ;
 
 }

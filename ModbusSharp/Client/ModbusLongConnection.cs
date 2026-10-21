@@ -12,7 +12,7 @@ public abstract class ModbusLongConnection<T> : ModbusClient<T> where T : BaseCo
     /// <summary>
     /// 是否正在重连
     /// </summary>
-    protected EventWaitHandle ReConnectHandle = new (false, EventResetMode.AutoReset);
+    AutoResetEvent ReConnectHandle = new (false);
 
     /// <summary>
     /// 

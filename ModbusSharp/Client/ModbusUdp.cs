@@ -42,12 +42,12 @@ public class ModbusUdp : ModbusClient<SocketConfig>
                     udpClient.Client.ReceiveTimeout = Config.ReceiveTimeout;
                     endPoint = new IPEndPoint(IPAddress.Parse(Config.IP), PortOut);
                     var data = udpClient.Receive(ref endPoint);
-                    return ModbusResponse.CreateSuccessResult(data);
+                    return ModbusResponse.Ok(data);
                 }
             }
             catch (Exception ex)
             {
-                return ModbusResponse.CreateFailedResult(ex.Message);
+                return ModbusResponse.Failed(ex.Message);
             }
         }
     }

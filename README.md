@@ -82,5 +82,4 @@ bool b = plc.保持寄存器测试 > 5;
 StaticPlc.保持寄存器测试.Write(3.55);
 plc.线圈测试.Write(false);
 plc.保持寄存器测试.InvokeChange(7);
-string json = Newtonsoft.Json.JsonConvert.SerializeObject(plc);
 ```

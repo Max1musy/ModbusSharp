@@ -5,7 +5,7 @@ namespace ModbusSharp.Client;
 /// <summary>
 /// Modbus请求体
 /// </summary>
-public class ModbusRequest : ContentBase
+public record ModbusRequest : ContentBase
 {
     /// <summary>
     /// 起始地址
@@ -149,7 +149,7 @@ public class ModbusRequest : ContentBase
 /// <summary>
 /// Modbus响应
 /// </summary>
-public class ModbusResponse : ContentBase
+public record ModbusResponse : ContentBase
 {
     /// <summary>
     /// 错误码
@@ -185,12 +185,12 @@ public class ModbusResponse : ContentBase
                 TransactionIdentifier = BitConverter.ToUInt16(new byte[] { Content[1], Content[0] });
                 if (TransactionIdentifier != request.TransactionIdentifier)
                 {
-                    throw new ArgumentException("响应事务号错误");
+                    throw new ArgumentException($"响应事务号错误 response:{TransactionIdentifier} request:{request.TransactionIdentifier}");
                 }
                 ProtocolIdentifier = BitConverter.ToUInt16(new byte[] { Content[3], Content[2] });
                 if (ProtocolIdentifier != request.ProtocolIdentifier)
                 {
-                    throw new ArgumentException("响应协议标识符错误");
+                    throw new ArgumentException($"响应协议标识符错误 response:{ProtocolIdentifier} request:{request.ProtocolIdentifier}");
                 }
                 Length = BitConverter.ToUInt16(new byte[] { Content[5], Content[4] });
                 UnitIdentifier = Content[6];
@@ -224,7 +224,7 @@ public class ModbusResponse : ContentBase
         }
         if (UnitIdentifier != request.UnitIdentifier)
         {
-            throw new ArgumentException("响应从站ID错误");
+            throw new ArgumentException($"响应从站ID错误 response:{UnitIdentifier} request:{request.UnitIdentifier}");
         }
         ModbusType = request.ModbusType;
         if ((byte)FunctionCode == (byte)(request.FunctionCode + 0x80))
@@ -297,29 +297,29 @@ public class ModbusResponse : ContentBase
             {
                 throw new Exception($"{typeof(T).Name}类型错误");
             }
-            return Result<T[]>.CreateSuccessResult(data);
+            return Result.Ok(data);
         }
         catch (Exception e)
         {
-            return Result<T[]>.CreateFailedResult(e.Message);
+            return Result.Failed<T[]>(e.Message);
         }
     }
 
     /// <summary>
     /// 创建成功结果
     /// </summary>
-    public static ModbusResponse CreateSuccessResult(byte[] value) => new() { Success = true, Content = value };
+    public static ModbusResponse Ok(byte[] value) => new() { Success = true, Content = value };
 
     /// <summary>
     /// 创建失败结果
     /// </summary>
-    public static ModbusResponse CreateFailedResult(string msg) => new() { Success = false, ErrorMsg = msg };
+    public static ModbusResponse Failed(string msg) => new() { Success = false, ErrorMsg = msg };
 }
 
 /// <summary>
 /// 基本体
 /// </summary>
-public class ContentBase
+public record ContentBase
 {
     /// <summary>
     /// 协议类型

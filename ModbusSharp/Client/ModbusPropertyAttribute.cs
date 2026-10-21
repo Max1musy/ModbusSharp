@@ -15,4 +15,12 @@ public class ModbusPropertyAttribute : Attribute
     /// 在寄存器读写bit位(bool)时候作为bitindex
     /// </summary>
     public int BitIndex { get; set; } = 0;
+
+    public ModbusPropertyAttribute(int address, int bitIndex = 0)
+    {
+        Address = address;
+        BitIndex = bitIndex;
+    }
+
+    public ModbusPropertyAttribute() { }
 }

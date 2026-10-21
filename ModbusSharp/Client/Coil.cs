@@ -21,11 +21,11 @@ public record Coil : IOWriteBase<bool>
             var res = Client.Read<bool>(Address);
             res.ThrowExceptionIfError();
             InvokeChange(res.Content);
-            return Result<bool>.CreateSuccessResult(LastData);
+            return Result.Ok(LastData);
         }
         catch (Exception ex)
         {
-            return Result<bool>.CreateFailedResult(ex.Message);
+            return Result.Failed<bool>(ex.Message);
         }
     }
 
@@ -41,11 +41,11 @@ public record Coil : IOWriteBase<bool>
             var res = Client.Write(Address, value);
             res.ThrowExceptionIfError();
             LastData = value;
-            return Result.CreateSuccessResult();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.CreateFailedResult(ex.Message);
+            return Result.Failed(ex.Message);
         }
     }
 

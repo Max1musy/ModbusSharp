@@ -22,11 +22,11 @@ public record DiscreteInput : IOReadBase<bool>
             var res = Client.Read<bool>(Address, true);
             res.ThrowExceptionIfError();
             InvokeChange(res.Content);
-            return Result<bool>.CreateSuccessResult(LastData);
+            return Result.Ok(LastData);
         }
         catch (Exception ex)
         {
-            return Result<bool>.CreateFailedResult(ex.Message);
+            return Result.Failed<bool>(ex.Message);
         }
     }
 

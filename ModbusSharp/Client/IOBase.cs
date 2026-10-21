@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace ModbusSharp.Client;
 
@@ -46,7 +45,6 @@ public abstract record IOBase
 /// 只读IO
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[JsonConverter(typeof(IOReadBaseConverter))]
 public abstract record IOReadBase<T> : IOBase where T : struct
 {
     /// <summary>

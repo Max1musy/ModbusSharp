@@ -34,11 +34,11 @@ public record InputRegister<T> : IOReadBase<T> where T : struct, IConvertible, I
                 res.ThrowExceptionIfError();
                 InvokeChange(res.Content[0]);
             }
-            return Result<T>.CreateSuccessResult(LastData);
+            return Result.Ok(LastData);
         }
         catch (Exception ex)
         {
-            return Result<T>.CreateFailedResult(ex.Message);
+            return Result.Failed<T>(ex.Message);
         }
     }
 
